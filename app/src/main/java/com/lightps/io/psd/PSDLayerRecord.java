@@ -45,6 +45,14 @@ public class PSDLayerRecord {
         }
     }
 
+    // ── Constants ──────────────────────────────────────
+
+    /** Section types for layer group dividers. */
+    public static final int SECTION_NORMAL = 0;
+    public static final int SECTION_GROUP_OPEN = 1;
+    public static final int SECTION_GROUP_CLOSED = 2;
+    public static final int SECTION_DIVIDER = 3;
+
     // ── Fields ─────────────────────────────────────────
 
     public int top, left, bottom, right;  // pixel bounds
