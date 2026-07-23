@@ -10,4 +10,11 @@
         <item name="android:background">#FF0F3460</item>
         <item name="android:gravity">center</item>
     </style>
+    <style name="ToolButtonSmall" parent="ToolButton">
+        <item name="android:layout_height">36dp</item>
+        <item name="android:layout_margin">1dp</item>
+        <item name="android:padding">4dp</item>
+        <item name="android:textSize">11sp</item>
+    </style>
+
 </resources>

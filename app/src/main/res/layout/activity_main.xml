@@ -7,99 +7,122 @@
     android:keepScreenOn="true"
     android:background="#FF1A1A2E">
 
-    <!-- Layers panel: slideable drawer on right -->
+    <!-- Top toolbar: tools -->
+    <LinearLayout
+        android:id="@+id/topBar"
+        android:layout_width="0dp"
+        android:layout_height="48dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="#FF0F1B33"
+        android:paddingHorizontal="4dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <Button
+            android:id="@+id/btn_pan"
+            style="@style/ToolButtonSmall"
+            android:text="移动" />
+
+        <Button
+            android:id="@+id/btn_eraser"
+            style="@style/ToolButtonSmall"
+            android:text="橡皮" />
+
+        <Button
+            android:id="@+id/btn_undo"
+            style="@style/ToolButtonSmall"
+            android:text="撤销" />
+
+        <Button
+            android:id="@+id/btn_size_down"
+            style="@style/ToolButtonSmall"
+            android:text="−S" />
+
+        <Button
+            android:id="@+id/btn_size_up"
+            style="@style/ToolButtonSmall"
+            android:text="+S" />
+
+        <TextView
+            android:id="@+id/sizeLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="20"
+            android:textColor="#FF64C8FF"
+            android:textSize="12sp"
+            android:paddingHorizontal="6dp" />
+
+    </LinearLayout>
+
+    <!-- Layers panel -->
     <com.lightps.ui.LayersPanel
         android:id="@+id/layersPanel"
         android:layout_width="140dp"
         android:layout_height="0dp"
         android:visibility="gone"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/toolbar"
+        app:layout_constraintTop_toBottomOf="@id/topBar"
+        app:layout_constraintBottom_toTopOf="@id/bottomBar"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- Canvas area -->
+    <!-- Canvas -->
     <com.lightps.ui.CanvasView
         android:id="@+id/canvas"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/toolbar"
+        app:layout_constraintTop_toBottomOf="@id/topBar"
+        app:layout_constraintBottom_toTopOf="@id/bottomBar"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toStartOf="@id/layersPanel" />
 
-    <!-- Bottom toolbar -->
+    <!-- Bottom toolbar: document ops + layers -->
     <LinearLayout
-        android:id="@+id/toolbar"
+        android:id="@+id/bottomBar"
         android:layout_width="0dp"
-        android:layout_height="60dp"
+        android:layout_height="48dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
         android:background="#FF16213E"
+        android:paddingHorizontal="4dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="horizontal">
+        <Button
+            android:id="@+id/btn_color"
+            style="@style/ToolButtonSmall"
+            android:text="颜色" />
 
-            <Button
-                android:id="@+id/btn_undo"
-                style="@style/ToolButton"
-                android:text="↩" />
+        <Button
+            android:id="@+id/btn_layers"
+            style="@style/ToolButtonSmall"
+            android:text="图层" />
 
-            <Button
-                android:id="@+id/btn_eraser"
-                style="@style/ToolButton"
-                android:text="Erase" />
+        <Button
+            android:id="@+id/btn_new_layer"
+            style="@style/ToolButtonSmall"
+            android:text="＋" />
 
-            <Button
-                android:id="@+id/btn_layers"
-                style="@style/ToolButton"
-                android:text="Layers" />
+        <Button
+            android:id="@+id/btn_del_layer"
+            style="@style/ToolButtonSmall"
+            android:text="−" />
 
-            <Button
-                android:id="@+id/btn_new_layer"
-                style="@style/ToolButton"
-                android:text="＋" />
+        <Button
+            android:id="@+id/btn_open"
+            style="@style/ToolButtonSmall"
+            android:text="打开" />
 
-            <Button
-                android:id="@+id/btn_del_layer"
-                style="@style/ToolButton"
-                android:text="−" />
+        <Button
+            android:id="@+id/btn_new"
+            style="@style/ToolButtonSmall"
+            android:text="新建" />
 
-            <Button
-                android:id="@+id/btn_color"
-                style="@style/ToolButton"
-                android:text="Color" />
-
-            <Button
-                android:id="@+id/btn_size_down"
-                style="@style/ToolButton"
-                android:text="−S" />
-
-            <Button
-                android:id="@+id/btn_size_up"
-                style="@style/ToolButton"
-                android:text="+S" />
-
-            <Button
-                android:id="@+id/btn_open"
-                style="@style/ToolButton"
-                android:text="Open" />
-
-            <Button
-                android:id="@+id/btn_new"
-                style="@style/ToolButton"
-                android:text="New" />
-
-            <Button
-                android:id="@+id/btn_save"
-                style="@style/ToolButton"
-                android:text="Save" />
-
-        </LinearLayout>
+        <Button
+            android:id="@+id/btn_save"
+            style="@style/ToolButtonSmall"
+            android:text="保存" />
 
     </LinearLayout>
 

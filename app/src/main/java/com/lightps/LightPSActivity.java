@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
@@ -24,7 +25,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 
 /**
- * Main editor activity for LightPS.
+ * 主编辑器 Activity - 全中文界面
  */
 public class LightPSActivity extends Activity {
 
@@ -37,7 +38,9 @@ public class LightPSActivity extends Activity {
     private Brush currentBrush;
     private boolean layersVisible = false;
     private boolean eraserMode = false;
-    private Button eraserButton;
+    private boolean panMode = false;
+    private Button eraserButton, panButton, layersButton;
+    private TextView sizeLabel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,16 +49,16 @@ public class LightPSActivity extends Activity {
 
         canvasView = findViewById(R.id.canvas);
         layersPanel = findViewById(R.id.layersPanel);
+        sizeLabel = findViewById(R.id.sizeLabel);
 
         createNewDocument(1920, 1080);
         setupToolbar();
     }
 
-    // ── Document management ────────────────────────────
+    // ── 文档管理 ────────────────────────────────────────
 
     private void createNewDocument(int width, int height) {
         document = new Document(width, height);
-
         PixelLayer bg = new PixelLayer("Background", width, height);
         bg.setPixels(createSolidBitmap(width, height, Color.WHITE));
         document.getLayerManager().addLayer(bg);
@@ -73,6 +76,7 @@ public class LightPSActivity extends Activity {
         currentBrush.setHardness(0.8f);
         currentBrush.setColor(Color.BLACK);
         canvasView.setBrush(currentBrush);
+        updateSizeLabel();
     }
 
     private void updateTitle() {
@@ -81,21 +85,83 @@ public class LightPSActivity extends Activity {
         setTitle(title);
     }
 
-    // ── Toolbar ────────────────────────────────────────
+    private void updateSizeLabel() {
+        if (sizeLabel != null && currentBrush != null) {
+            sizeLabel.setText(String.valueOf((int) currentBrush.getSize()));
+        }
+    }
+
+    // ── 工具栏 ──────────────────────────────────────────
 
     private void setupToolbar() {
-        findViewById(R.id.btn_layers).setOnClickListener(v -> {
+        // 移动工具
+        panButton = findViewById(R.id.btn_pan);
+        panButton.setOnClickListener(v -> {
+            panMode = !panMode;
+            canvasView.setPanMode(panMode);
+            if (panMode) {
+                eraserMode = false;
+                eraserButton.setText("橡皮");
+                eraserButton.setBackgroundColor(Color.rgb(15, 52, 96));
+            }
+            panButton.setBackgroundColor(panMode ? Color.rgb(180, 120, 30) : Color.rgb(15, 52, 96));
+            panButton.setText(panMode ? "画笔" : "移动");
+        });
+
+        // 橡皮
+        eraserButton = findViewById(R.id.btn_eraser);
+        eraserButton.setOnClickListener(v -> {
+            eraserMode = !eraserMode;
+            canvasView.setEraserMode(eraserMode);
+            if (eraserMode) {
+                panMode = false;
+                panButton.setText("移动");
+                panButton.setBackgroundColor(Color.rgb(15, 52, 96));
+            }
+            eraserButton.setText(eraserMode ? "画笔" : "橡皮");
+            eraserButton.setBackgroundColor(eraserMode ? Color.rgb(180, 40, 40) : Color.rgb(15, 52, 96));
+        });
+
+        // 撤销
+        findViewById(R.id.btn_undo).setOnClickListener(v -> {
+            if (canvasView.undo()) {
+                document.setModified(true);
+                updateTitle();
+            }
+        });
+
+        // 画笔大小
+        findViewById(R.id.btn_size_up).setOnClickListener(v -> {
+            if (currentBrush != null) {
+                int step = currentBrush.getSize() < 50 ? 5 : 20;
+                currentBrush.setSize(currentBrush.getSize() + step);
+                updateSizeLabel();
+            }
+        });
+        findViewById(R.id.btn_size_down).setOnClickListener(v -> {
+            if (currentBrush != null) {
+                int step = currentBrush.getSize() <= 50 ? 5 : 20;
+                currentBrush.setSize(Math.max(1, currentBrush.getSize() - step));
+                updateSizeLabel();
+            }
+        });
+
+        // 颜色
+        findViewById(R.id.btn_color).setOnClickListener(v -> showColorPicker());
+
+        // 图层面板
+        layersButton = findViewById(R.id.btn_layers);
+        layersButton.setOnClickListener(v -> {
             layersVisible = !layersVisible;
             layersPanel.setVisibility(layersVisible ? View.VISIBLE : View.GONE);
             layersPanel.refresh();
         });
 
         findViewById(R.id.btn_new_layer).setOnClickListener(v -> {
-            PixelLayer newLayer = new PixelLayer(
-                    "Layer " + (document.getLayerManager().layerCount() + 1),
+            PixelLayer nl = new PixelLayer("图层 " + (document.getLayerManager().layerCount()),
                     document.getWidth(), document.getHeight());
-            document.getLayerManager().addLayer(newLayer);
-            document.getLayerManager().setActiveLayer(newLayer);
+            document.getLayerManager().addLayer(nl);
+            document.getLayerManager().setActiveLayer(nl);
             canvasView.invalidateFlat();
             layersPanel.refresh();
             document.setModified(true);
@@ -113,48 +179,13 @@ public class LightPSActivity extends Activity {
             }
         });
 
-        findViewById(R.id.btn_undo).setOnClickListener(v -> {
-            if (canvasView.undo()) {
-                document.setModified(true);
-                updateTitle();
-            }
-        });
-
-        // ── Eraser ──
-        eraserButton = findViewById(R.id.btn_eraser);
-        eraserButton.setOnClickListener(v -> {
-            eraserMode = !eraserMode;
-            canvasView.setEraserMode(eraserMode);
-            eraserButton.setText(eraserMode ? "Brush" : "Erase");
-            eraserButton.setBackgroundColor(eraserMode
-                    ? Color.rgb(180, 40, 40)
-                    : Color.rgb(15, 52, 96));
-        });
-
-        // ── Brush controls ──
-        findViewById(R.id.btn_color).setOnClickListener(v -> showColorPicker());
-
-        findViewById(R.id.btn_size_up).setOnClickListener(v -> {
-            if (currentBrush != null) {
-                int step = currentBrush.getSize() < 50 ? 5 : 20;
-                currentBrush.setSize(currentBrush.getSize() + step);
-            }
-        });
-
-        findViewById(R.id.btn_size_down).setOnClickListener(v -> {
-            if (currentBrush != null) {
-                int step = currentBrush.getSize() <= 50 ? 5 : 20;
-                currentBrush.setSize(Math.max(1, currentBrush.getSize() - step));
-            }
-        });
-
-        // ── Open / New / Save ──
+        // 打开 / 新建 / 保存
         findViewById(R.id.btn_open).setOnClickListener(v -> {
             Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT);
             i.addCategory(Intent.CATEGORY_OPENABLE);
             i.setType("*/*");
-            String[] mimeTypes = {"image/png", "image/jpeg", "image/webp", "image/bmp", "application/octet-stream"};
-            i.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes);
+            i.putExtra(Intent.EXTRA_MIME_TYPES,
+                    new String[]{"image/png", "image/jpeg", "image/webp", "image/bmp", "application/octet-stream"});
             startActivityForResult(i, REQUEST_OPEN);
         });
 
@@ -175,15 +206,11 @@ public class LightPSActivity extends Activity {
 
     private void showNewDocDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("New Document");
-
+        builder.setTitle("新建文档");
         View view = getLayoutInflater().inflate(R.layout.dialog_new_doc, null);
         builder.setView(view);
-
-        builder.setPositiveButton("Create", (dialog, which) -> {
-            createNewDocument(1920, 1080);
-        });
-        builder.setNegativeButton("Cancel", null);
+        builder.setPositiveButton("创建", (dialog, which) -> createNewDocument(1920, 1080));
+        builder.setNegativeButton("取消", null);
         builder.show();
     }
 
@@ -194,17 +221,13 @@ public class LightPSActivity extends Activity {
                 Color.GRAY, Color.DKGRAY, 0xFF8B4513, 0xFFD2B48C
         };
         final String[] names = {
-                "Black", "White", "Red", "Green", "Blue",
-                "Yellow", "Cyan", "Magenta", "Gray", "Dark Gray",
-                "Brown", "Tan"
+                "黑色", "白色", "红色", "绿色", "蓝色",
+                "黄色", "青色", "品红", "灰色", "深灰", "棕色", "米色"
         };
-
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Pick Color");
+        builder.setTitle("选择颜色");
         builder.setItems(names, (dialog, which) -> {
-            if (currentBrush != null) {
-                currentBrush.setColor(colors[which]);
-            }
+            if (currentBrush != null) currentBrush.setColor(colors[which]);
         });
         builder.show();
     }
@@ -215,43 +238,31 @@ public class LightPSActivity extends Activity {
             document.setModified(false);
             updateTitle();
         } catch (Exception e) {
-            android.widget.Toast.makeText(this, "Save failed: " + e.getMessage(),
+            android.widget.Toast.makeText(this, "保存失败: " + e.getMessage(),
                     android.widget.Toast.LENGTH_SHORT).show();
         }
     }
 
-    // ── Activity results ───────────────────────────────
+    // ── Activity 结果 ───────────────────────────────
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-
         if (resultCode != Activity.RESULT_OK || data == null) return;
-
         Uri uri = data.getData();
         if (uri == null) return;
-
         try {
-            switch (requestCode) {
-                case REQUEST_OPEN:
-                    openFile(uri);
-                    break;
-                case REQUEST_SAVE:
-                    saveToUri(uri);
-                    break;
-            }
+            if (requestCode == REQUEST_OPEN) openFile(uri);
+            else if (requestCode == REQUEST_SAVE) saveToUri(uri);
         } catch (Exception e) {
-            android.widget.Toast.makeText(this, "Error: " + e.getMessage(),
+            android.widget.Toast.makeText(this, "错误: " + e.getMessage(),
                     android.widget.Toast.LENGTH_SHORT).show();
         }
     }
 
     private void openFile(Uri uri) throws Exception {
         String name = uri.getLastPathSegment();
-        boolean isPsd = name != null && name.toLowerCase().endsWith(".psd");
-
-        if (isPsd) {
-            // Open as PSD
+        if (name != null && name.toLowerCase().endsWith(".psd")) {
             ParcelFileDescriptor pfd = getContentResolver().openFileDescriptor(uri, "r");
             if (pfd == null) return;
             FileInputStream fis = new FileInputStream(pfd.getFileDescriptor());
@@ -259,23 +270,15 @@ public class LightPSActivity extends Activity {
             com.lightps.engine.layer.LayerManager lm = loader.load(fis);
             fis.close();
             pfd.close();
-
             document = new Document(lm.getWidth(), lm.getHeight());
-            // Copy layers
-            for (int i = 0; i < lm.layerCount(); i++) {
+            for (int i = 0; i < lm.layerCount(); i++)
                 document.getLayerManager().addLayer(lm.getLayer(i));
-            }
-            // Save the URI for re-save
-            document.setFile(new File(uri.getPath()));
         } else {
-            // Open as bitmap (PNG, JPEG, etc.)
-            Bitmap bmp = android.provider.MediaStore.Images.Media.getBitmap(
-                    getContentResolver(), uri);
+            Bitmap bmp = android.provider.MediaStore.Images.Media.getBitmap(getContentResolver(), uri);
             document = new Document(bmp.getWidth(), bmp.getHeight());
-            PixelLayer layer = new PixelLayer("Imported", bmp);
+            PixelLayer layer = new PixelLayer("导入 " + (name != null ? name : "图片"), bmp);
             document.getLayerManager().addLayer(layer);
         }
-
         canvasView.setLayerManager(document.getLayerManager());
         layersPanel.setLayerManager(document.getLayerManager());
         layersPanel.refresh();
@@ -284,10 +287,7 @@ public class LightPSActivity extends Activity {
 
     private void saveToUri(Uri uri) throws Exception {
         String name = uri.getLastPathSegment();
-        boolean isPsd = name != null && name.toLowerCase().endsWith(".psd");
-
-        if (isPsd) {
-            // Save as PSD
+        if (name != null && name.toLowerCase().endsWith(".psd")) {
             ParcelFileDescriptor pfd = getContentResolver().openFileDescriptor(uri, "w");
             if (pfd == null) return;
             FileOutputStream fos = new FileOutputStream(pfd.getFileDescriptor());
@@ -296,21 +296,18 @@ public class LightPSActivity extends Activity {
             fos.close();
             pfd.close();
             document.setModified(false);
-            document.setFile(new File(uri.getPath()));
             updateTitle();
         } else {
-            // Export as PNG
             java.io.OutputStream out = getContentResolver().openOutputStream(uri);
             if (out != null) {
                 Bitmap flat = document.getLayerManager().flatten();
-                flat.compress(Bitmap.CompressFormat.PNG, 100,
-                        new java.io.BufferedOutputStream(out));
+                flat.compress(Bitmap.CompressFormat.PNG, 100, new java.io.BufferedOutputStream(out));
                 out.close();
             }
         }
     }
 
-    // ── Helpers ────────────────────────────────────────
+    // ── 工具 ────────────────────────────────────────────
 
     private Bitmap createSolidBitmap(int w, int h, int color) {
         Bitmap bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
