@@ -6,6 +6,8 @@ android {
     namespace = "com.lightps"
     compileSdk = 34
 
+    // Need to set android.useAndroidX=true in gradle.properties
+
     defaultConfig {
         applicationId = "com.lightps"
         minSdk = 24
@@ -17,6 +19,7 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = true
+            isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
         }
     }
