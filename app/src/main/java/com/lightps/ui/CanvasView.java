@@ -457,7 +457,14 @@ public class CanvasView extends View {
         PointF last = strokePoints.get(strokePoints.size() - 1);
         currentPath.lineTo(last.x, last.y);
 
-        strokePaint.setColor(currentBrush != null ? currentBrush.getColor() : Color.BLACK);
+        if (eraserMode) {
+            // Eraser preview: red outline so user can see where they are erasing
+            strokePaint.setColor(0xCCFF4444);
+            strokePaint.setStyle(Paint.Style.STROKE);
+        } else {
+            strokePaint.setColor(currentBrush != null ? currentBrush.getColor() : Color.BLACK);
+            strokePaint.setStyle(Paint.Style.STROKE);
+        }
         strokePaint.setStrokeWidth(currentBrush != null ? currentBrush.getSize() : 10f);
         strokePaint.setXfermode(null);
     }

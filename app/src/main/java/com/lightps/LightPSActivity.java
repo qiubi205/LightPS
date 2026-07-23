@@ -6,9 +6,9 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.ParcelFileDescriptor;
 import android.view.View;
 import android.widget.Button;
-import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
@@ -18,6 +18,10 @@ import com.lightps.engine.layer.PixelLayer;
 import com.lightps.model.Document;
 import com.lightps.ui.CanvasView;
 import com.lightps.ui.LayersPanel;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 
 /**
  * Main editor activity for LightPS.
@@ -43,10 +47,7 @@ public class LightPSActivity extends Activity {
         canvasView = findViewById(R.id.canvas);
         layersPanel = findViewById(R.id.layersPanel);
 
-        // Initialize with a new empty document
         createNewDocument(1920, 1080);
-
-        // Tools
         setupToolbar();
     }
 
@@ -55,12 +56,10 @@ public class LightPSActivity extends Activity {
     private void createNewDocument(int width, int height) {
         document = new Document(width, height);
 
-        // Add a white background layer
         PixelLayer bg = new PixelLayer("Background", width, height);
         bg.setPixels(createSolidBitmap(width, height, Color.WHITE));
         document.getLayerManager().addLayer(bg);
 
-        // Add a transparent layer for drawing
         PixelLayer drawLayer = new PixelLayer("Layer 1", width, height);
         document.getLayerManager().addLayer(drawLayer);
         document.getLayerManager().setActiveLayer(drawLayer);
@@ -69,7 +68,6 @@ public class LightPSActivity extends Activity {
         layersPanel.setLayerManager(document.getLayerManager());
         updateTitle();
 
-        // Initialize brush
         currentBrush = new Brush();
         currentBrush.setSize(20f);
         currentBrush.setHardness(0.8f);
@@ -86,7 +84,6 @@ public class LightPSActivity extends Activity {
     // ── Toolbar ────────────────────────────────────────
 
     private void setupToolbar() {
-        // ── Layer controls ──
         findViewById(R.id.btn_layers).setOnClickListener(v -> {
             layersVisible = !layersVisible;
             layersPanel.setVisibility(layersVisible ? View.VISIBLE : View.GONE);
@@ -94,7 +91,8 @@ public class LightPSActivity extends Activity {
         });
 
         findViewById(R.id.btn_new_layer).setOnClickListener(v -> {
-            PixelLayer newLayer = new PixelLayer("Layer " + (document.getLayerManager().layerCount() + 1),
+            PixelLayer newLayer = new PixelLayer(
+                    "Layer " + (document.getLayerManager().layerCount() + 1),
                     document.getWidth(), document.getHeight());
             document.getLayerManager().addLayer(newLayer);
             document.getLayerManager().setActiveLayer(newLayer);
@@ -102,7 +100,6 @@ public class LightPSActivity extends Activity {
             layersPanel.refresh();
             document.setModified(true);
             updateTitle();
-            showToast("New layer added");
         });
 
         findViewById(R.id.btn_del_layer).setOnClickListener(v -> {
@@ -113,20 +110,13 @@ public class LightPSActivity extends Activity {
                 layersPanel.refresh();
                 document.setModified(true);
                 updateTitle();
-                showToast("Layer deleted");
-            } else {
-                showToast("Cannot delete last layer");
             }
         });
 
-        // ── Undo ──
         findViewById(R.id.btn_undo).setOnClickListener(v -> {
             if (canvasView.undo()) {
                 document.setModified(true);
                 updateTitle();
-                showToast("Undo");
-            } else {
-                showToast("Nothing to undo");
             }
         });
 
@@ -139,7 +129,6 @@ public class LightPSActivity extends Activity {
             eraserButton.setBackgroundColor(eraserMode
                     ? Color.rgb(180, 40, 40)
                     : Color.rgb(15, 52, 96));
-            showToast(eraserMode ? "Eraser ON" : "Brush mode");
         });
 
         // ── Brush controls ──
@@ -149,7 +138,6 @@ public class LightPSActivity extends Activity {
             if (currentBrush != null) {
                 int step = currentBrush.getSize() < 50 ? 5 : 20;
                 currentBrush.setSize(currentBrush.getSize() + step);
-                showToast("Size: " + (int) currentBrush.getSize());
             }
         });
 
@@ -157,11 +145,19 @@ public class LightPSActivity extends Activity {
             if (currentBrush != null) {
                 int step = currentBrush.getSize() <= 50 ? 5 : 20;
                 currentBrush.setSize(Math.max(1, currentBrush.getSize() - step));
-                showToast("Size: " + (int) currentBrush.getSize());
             }
         });
 
-        // ── Document controls ──
+        // ── Open / New / Save ──
+        findViewById(R.id.btn_open).setOnClickListener(v -> {
+            Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+            i.addCategory(Intent.CATEGORY_OPENABLE);
+            i.setType("*/*");
+            String[] mimeTypes = {"image/png", "image/jpeg", "image/webp", "image/bmp", "application/octet-stream"};
+            i.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes);
+            startActivityForResult(i, REQUEST_OPEN);
+        });
+
         findViewById(R.id.btn_new).setOnClickListener(v -> showNewDocDialog());
 
         findViewById(R.id.btn_save).setOnClickListener(v -> {
@@ -170,8 +166,8 @@ public class LightPSActivity extends Activity {
             } else {
                 Intent i = new Intent(Intent.ACTION_CREATE_DOCUMENT);
                 i.addCategory(Intent.CATEGORY_OPENABLE);
-                i.setType("image/png");
-                i.putExtra(Intent.EXTRA_TITLE, "drawing.png");
+                i.setType("*/*");
+                i.putExtra(Intent.EXTRA_TITLE, "drawing.psd");
                 startActivityForResult(i, REQUEST_SAVE);
             }
         });
@@ -218,9 +214,9 @@ public class LightPSActivity extends Activity {
             document.save();
             document.setModified(false);
             updateTitle();
-            showToast("Saved");
         } catch (Exception e) {
-            showToast("Save failed: " + e.getMessage());
+            android.widget.Toast.makeText(this, "Save failed: " + e.getMessage(),
+                    android.widget.Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -237,35 +233,80 @@ public class LightPSActivity extends Activity {
 
         try {
             switch (requestCode) {
-                case REQUEST_OPEN: {
-                    Bitmap bmp =
-                            android.provider.MediaStore.Images.Media.getBitmap(
-                                    getContentResolver(), uri);
-                    Document doc = new Document(bmp.getWidth(), bmp.getHeight());
-                    PixelLayer layer = new PixelLayer("Imported", bmp);
-                    doc.getLayerManager().addLayer(layer);
-                    document = doc;
-                    canvasView.setLayerManager(document.getLayerManager());
-                    layersPanel.setLayerManager(document.getLayerManager());
-                    layersPanel.refresh();
-                    updateTitle();
+                case REQUEST_OPEN:
+                    openFile(uri);
                     break;
-                }
                 case REQUEST_SAVE:
-                    if (document != null) {
-                        java.io.OutputStream out = getContentResolver().openOutputStream(uri);
-                        if (out != null) {
-                            Bitmap flat = document.getLayerManager().flatten();
-                            flat.compress(Bitmap.CompressFormat.PNG, 100,
-                                    new java.io.BufferedOutputStream(out));
-                            out.close();
-                            showToast("Exported");
-                        }
-                    }
+                    saveToUri(uri);
                     break;
             }
         } catch (Exception e) {
-            showToast("Error: " + e.getMessage());
+            android.widget.Toast.makeText(this, "Error: " + e.getMessage(),
+                    android.widget.Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void openFile(Uri uri) throws Exception {
+        String name = uri.getLastPathSegment();
+        boolean isPsd = name != null && name.toLowerCase().endsWith(".psd");
+
+        if (isPsd) {
+            // Open as PSD
+            ParcelFileDescriptor pfd = getContentResolver().openFileDescriptor(uri, "r");
+            if (pfd == null) return;
+            FileInputStream fis = new FileInputStream(pfd.getFileDescriptor());
+            com.lightps.io.psd.PSDLoader loader = new com.lightps.io.psd.PSDLoader();
+            com.lightps.engine.layer.LayerManager lm = loader.load(fis);
+            fis.close();
+            pfd.close();
+
+            document = new Document(lm.getWidth(), lm.getHeight());
+            // Copy layers
+            for (int i = 0; i < lm.layerCount(); i++) {
+                document.getLayerManager().addLayer(lm.getLayer(i));
+            }
+            // Save the URI for re-save
+            document.setFile(new File(uri.getPath()));
+        } else {
+            // Open as bitmap (PNG, JPEG, etc.)
+            Bitmap bmp = android.provider.MediaStore.Images.Media.getBitmap(
+                    getContentResolver(), uri);
+            document = new Document(bmp.getWidth(), bmp.getHeight());
+            PixelLayer layer = new PixelLayer("Imported", bmp);
+            document.getLayerManager().addLayer(layer);
+        }
+
+        canvasView.setLayerManager(document.getLayerManager());
+        layersPanel.setLayerManager(document.getLayerManager());
+        layersPanel.refresh();
+        updateTitle();
+    }
+
+    private void saveToUri(Uri uri) throws Exception {
+        String name = uri.getLastPathSegment();
+        boolean isPsd = name != null && name.toLowerCase().endsWith(".psd");
+
+        if (isPsd) {
+            // Save as PSD
+            ParcelFileDescriptor pfd = getContentResolver().openFileDescriptor(uri, "w");
+            if (pfd == null) return;
+            FileOutputStream fos = new FileOutputStream(pfd.getFileDescriptor());
+            com.lightps.io.psd.PSDSaver saver = new com.lightps.io.psd.PSDSaver();
+            saver.save(document.getLayerManager(), fos);
+            fos.close();
+            pfd.close();
+            document.setModified(false);
+            document.setFile(new File(uri.getPath()));
+            updateTitle();
+        } else {
+            // Export as PNG
+            java.io.OutputStream out = getContentResolver().openOutputStream(uri);
+            if (out != null) {
+                Bitmap flat = document.getLayerManager().flatten();
+                flat.compress(Bitmap.CompressFormat.PNG, 100,
+                        new java.io.BufferedOutputStream(out));
+                out.close();
+            }
         }
     }
 
@@ -275,9 +316,5 @@ public class LightPSActivity extends Activity {
         Bitmap bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
         bmp.eraseColor(color);
         return bmp;
-    }
-
-    private void showToast(String msg) {
-        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
     }
 }
