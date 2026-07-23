@@ -27,7 +27,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toStartOf="@id/layersPanel" />
 
-    <!-- Bottom toolbar -->
+    <!-- Bottom toolbar (2 rows to fit more buttons) -->
     <LinearLayout
         android:id="@+id/toolbar"
         android:layout_width="0dp"
@@ -39,45 +39,52 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <Button
-            android:id="@+id/btn_layers"
-            style="@style/ToolButton"
-            android:text="Layers" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal">
 
-        <Button
-            android:id="@+id/btn_new_layer"
-            style="@style/ToolButton"
-            android:text="＋" />
+            <Button
+                android:id="@+id/btn_undo"
+                style="@style/ToolButton"
+                android:text="↩" />
 
-        <Button
-            android:id="@+id/btn_del_layer"
-            style="@style/ToolButton"
-            android:text="−" />
+            <Button
+                android:id="@+id/btn_eraser"
+                style="@style/ToolButton"
+                android:text="Erase" />
 
-        <Button
-            android:id="@+id/btn_color"
-            style="@style/ToolButton"
-            android:text="Color" />
+            <Button
+                android:id="@+id/btn_layers"
+                style="@style/ToolButton"
+                android:text="Layers" />
 
-        <Button
-            android:id="@+id/btn_size_down"
-            style="@style/ToolButton"
-            android:text="−S" />
+            <Button
+                android:id="@+id/btn_new_layer"
+                style="@style/ToolButton"
+                android:text="＋" />
 
-        <Button
-            android:id="@+id/btn_size_up"
-            style="@style/ToolButton"
-            android:text="+S" />
+            <Button
+                android:id="@+id/btn_del_layer"
+                style="@style/ToolButton"
+                android:text="−" />
 
-        <Button
-            android:id="@+id/btn_new"
-            style="@style/ToolButton"
-            android:text="New" />
+            <Button
+                android:id="@+id/btn_color"
+                style="@style/ToolButton"
+                android:text="Color" />
 
-        <Button
-            android:id="@+id/btn_save"
-            style="@style/ToolButton"
-            android:text="Save" />
+            <Button
+                android:id="@+id/btn_size_down"
+                style="@style/ToolButton"
+                android:text="−S" />
+
+            <Button
+                android:id="@+id/btn_size_up"
+                style="@style/ToolButton"
+                android:text="+S" />
+
+        </LinearLayout>
 
     </LinearLayout>
 

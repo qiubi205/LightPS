@@ -7,6 +7,7 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.Button;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -31,6 +32,8 @@ public class LightPSActivity extends Activity {
     private Document document;
     private Brush currentBrush;
     private boolean layersVisible = false;
+    private boolean eraserMode = false;
+    private Button eraserButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -91,7 +94,6 @@ public class LightPSActivity extends Activity {
         });
 
         findViewById(R.id.btn_new_layer).setOnClickListener(v -> {
-            // Add a new transparent layer above the active one
             PixelLayer newLayer = new PixelLayer("Layer " + (document.getLayerManager().layerCount() + 1),
                     document.getWidth(), document.getHeight());
             document.getLayerManager().addLayer(newLayer);
@@ -117,20 +119,45 @@ public class LightPSActivity extends Activity {
             }
         });
 
+        // ── Undo ──
+        findViewById(R.id.btn_undo).setOnClickListener(v -> {
+            if (canvasView.undo()) {
+                document.setModified(true);
+                updateTitle();
+                showToast("Undo");
+            } else {
+                showToast("Nothing to undo");
+            }
+        });
+
+        // ── Eraser ──
+        eraserButton = findViewById(R.id.btn_eraser);
+        eraserButton.setOnClickListener(v -> {
+            eraserMode = !eraserMode;
+            canvasView.setEraserMode(eraserMode);
+            eraserButton.setText(eraserMode ? "Brush" : "Erase");
+            eraserButton.setBackgroundColor(eraserMode
+                    ? Color.rgb(180, 40, 40)
+                    : Color.rgb(15, 52, 96));
+            showToast(eraserMode ? "Eraser ON" : "Brush mode");
+        });
+
         // ── Brush controls ──
         findViewById(R.id.btn_color).setOnClickListener(v -> showColorPicker());
 
         findViewById(R.id.btn_size_up).setOnClickListener(v -> {
             if (currentBrush != null) {
-                currentBrush.setSize(currentBrush.getSize() + 5);
-                showToast("Brush size: " + (int) currentBrush.getSize());
+                int step = currentBrush.getSize() < 50 ? 5 : 20;
+                currentBrush.setSize(currentBrush.getSize() + step);
+                showToast("Size: " + (int) currentBrush.getSize());
             }
         });
 
         findViewById(R.id.btn_size_down).setOnClickListener(v -> {
             if (currentBrush != null) {
-                currentBrush.setSize(Math.max(1, currentBrush.getSize() - 5));
-                showToast("Brush size: " + (int) currentBrush.getSize());
+                int step = currentBrush.getSize() <= 50 ? 5 : 20;
+                currentBrush.setSize(Math.max(1, currentBrush.getSize() - step));
+                showToast("Size: " + (int) currentBrush.getSize());
             }
         });
 
