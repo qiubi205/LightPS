@@ -60,6 +60,16 @@ public class ColorSpace {
 
     // ── Constructor ────────────────────────────────────
 
+    // Convenience constructor with chromaticity arrays
+    public ColorSpace(String name,
+                      double[] r, double[] g, double[] b,
+                      double[] whitePoint,
+                      double gamma, boolean piecewiseGamma, float[] gammaParams) {
+        this(name, r[0], r[1], g[0], g[1], b[0], b[1],
+             whitePoint[0], whitePoint[1],
+             gamma, piecewiseGamma, gammaParams);
+    }
+
     public ColorSpace(String name,
                       double rx, double ry, double gx, double gy,
                       double bx, double by,
