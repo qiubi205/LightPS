@@ -46,7 +46,8 @@ public class CanvasView extends View {
     private Path currentPath;
     private Paint strokePaint;
 
-    // Touch sampling
+    // Touch tracking & sampling
+    private float lastX, lastY;
     private long lastTouchTime;
     private float lastTouchX, lastTouchY;
 

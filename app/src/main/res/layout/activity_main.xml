@@ -27,7 +27,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toStartOf="@id/layersPanel" />
 
-    <!-- Bottom toolbar (2 rows to fit more buttons) -->
+    <!-- Bottom toolbar -->
     <LinearLayout
         android:id="@+id/toolbar"
         android:layout_width="0dp"
@@ -83,6 +83,16 @@
                 android:id="@+id/btn_size_up"
                 style="@style/ToolButton"
                 android:text="+S" />
+
+            <Button
+                android:id="@+id/btn_new"
+                style="@style/ToolButton"
+                android:text="New" />
+
+            <Button
+                android:id="@+id/btn_save"
+                style="@style/ToolButton"
+                android:text="Save" />
 
         </LinearLayout>
 

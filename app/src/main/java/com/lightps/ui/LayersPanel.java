@@ -28,7 +28,7 @@ public class LayersPanel extends ListView {
 
     public LayersPanel(Context context, AttributeSet attrs) {
         super(context, attrs);
-        setDivider(new ColorDrawable(Color.parseColor("#FF2A2A4A")));
+        setDivider(new android.graphics.drawable.ColorDrawable(Color.parseColor("#FF2A2A4A")));
         setDividerHeight(1);
         setBackgroundColor(Color.parseColor("#FF1A1A2E"));
     }
