@@ -1,24 +1,18 @@
 package com.lightps.ui;
 
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.Rect;
+import android.graphics.drawable.ColorDrawable;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
-import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
 import com.lightps.engine.layer.Layer;
 import com.lightps.engine.layer.LayerManager;
-
-import java.util.List;
 
 /**
  * Layers panel showing the layer stack with thumbnails and controls.
@@ -34,7 +28,7 @@ public class LayersPanel extends ListView {
 
     public LayersPanel(Context context, AttributeSet attrs) {
         super(context, attrs);
-        setDivider(Color.parseColor("#FF2A2A4A"));
+        setDivider(new ColorDrawable(Color.parseColor("#FF2A2A4A")));
         setDividerHeight(1);
         setBackgroundColor(Color.parseColor("#FF1A1A2E"));
     }
